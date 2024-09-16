@@ -22,7 +22,8 @@ router.get('/auth/google/callback', async (req, res) => {
         try {
             const tokens = await getToken(code);
             setCredentials(tokens);
-            res.send('Authentication successful! You can now create events.');
+            // res.send('Authentication successful! You can now create events.');
+            res.status(200).redirect(`${process.env.CLIENT_API_URL}/course/:courseId/schedule/google-meet`);
         } catch (error) {
             console.error('Token retrieval error:', error);
             res.status(500).send('Authentication failed.');
