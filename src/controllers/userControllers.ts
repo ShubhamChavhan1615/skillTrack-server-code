@@ -11,6 +11,7 @@ export interface CustomizedRequest extends Request {
     user?: {
         id: string;
     };
+    courseId?:string
 }
 
 //test 
