@@ -11,7 +11,7 @@ export interface CustomizedRequest extends Request {
     user?: {
         id: string;
     };
-    courseId?:string
+    courseId?: string
 }
 
 //test 
@@ -30,35 +30,56 @@ export const sendOtp = async (req: Request, res: Response) => {
         const { email } = req.body;
         if (!email) return res.status(400).json({ msg: "Email is required" });
 
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ msg: "User not found" });
+
+        // Create a transport for sending emails
         const transport = nodeMailer.createTransport({
             service: "gmail",
             auth: {
                 user: process.env.MY_EMAIL,
-                pass: process.env.MY_PASS
-            }
+                pass: process.env.MY_PASS,
+            },
         });
 
-        const otp = Math.floor(1000 + Math.random() * 9000); // Generate a random 4-digit OTP
-        const subject = "Email Validation for SkillTrack";
-        const message = `Your OTP for email verification is: ${otp}`;
+        // Generate a random 4-digit OTP
+        const otp = Math.floor(1000 + Math.random() * 9000);
 
+        // Check if the user exists and send OTP accordingly
+        let subject, message;
+        if (user) {
+            // OTP for password reset
+            subject = "Password Reset Request - SkillTrack";
+            message = `Dear User,\n\nWe received a request to reset your password. Please use the following OTP to reset your password: ${otp}\n\nIf you did not request this, please ignore this email.\n\nThank you,\nSkillTrack Team`;
+        } else {
+            // General email verification or another operation
+            subject = "Verify Your Email Address - SkillTrack";
+            message = `Dear User,\n\nTo complete your registration on SkillTrack, please use the following OTP for verification: ${otp}\n\nIf you did not request this, please ignore this email.\n\nThank you,\nSkillTrack Team`;
+        }
+
+        // Mail options for sending OTP
         const mailOptions = {
             from: process.env.MY_EMAIL,
             to: email,
             subject: subject,
-            text: message
+            text: message,
         };
 
+        // Send mail with OTP
         transport.sendMail(mailOptions, (err, info) => {
-            if (err) return res.status(400).json({ msg: "Mail sending failed." });
+            if (err) {
+                console.error("Error sending mail:", err); // Detailed log for debugging
+                return res.status(400).json({ msg: "Mail sending failed." });
+            }
 
+            // Respond with success and OTP
             return res.status(200).json({ msg: "Mail sent successfully", otp });
         });
     } catch (error) {
-        console.log(error);
+        console.error("Internal server error:", error); // Detailed error log for debugging
         res.status(500).json({ msg: "Internal server error" });
     }
-}
+};
 
 //handle user SignUp
 export const signUpUser = async (req: Request, res: Response) => {
@@ -204,3 +225,36 @@ export const chatWithAI = async (req: Request, res: Response) => {
         res.status(500).json({ response: "Sorry, something went wrong on the server." });
     }
 }
+
+export const changePassword = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.params; // Extract email from URL parameters
+        const { password } = req.body; // Extract new password from request body
+
+        if (!password) {
+            return res.status(400).json({ msg: "Password is required." });
+        }
+
+        // Find the user by email
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ msg: "User not found." });
+        }
+
+        // Hash the new password
+        const hashPassword = await bcrypt.hash(password, 11);
+
+        // Update the user's password and save
+        user.password = hashPassword;
+        await user.save();
+
+        // Generate a new token after changing the password
+        const token = generateToken(user.id);
+
+        // Respond with success message and the new token
+        res.status(200).json({ msg: "Password changed successfully.", token });
+    } catch (error) {
+        console.error("Error handling request:", error); // Log the error for debugging purposes
+        res.status(500).json({ response: "Sorry, something went wrong on the server." });
+    }
+};

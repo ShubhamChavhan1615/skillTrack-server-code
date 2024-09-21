@@ -1,5 +1,5 @@
 import express from "express";
-import { chatWithAI, editUser, getAllInstructors, getCoursesForStudent, getUser, sendOtp, signUpUser, testRoute, userLogin } from "../controllers/userControllers";
+import { changePassword, chatWithAI, editUser, getAllInstructors, getCoursesForStudent, getUser, sendOtp, signUpUser, testRoute, userLogin } from "../controllers/userControllers";
 import jwtAuthMiddleware from "../middlewares/jwtAuth";
 import { getCourses } from "../controllers/courseController";
 const router = express.Router();
@@ -34,5 +34,8 @@ router.get("/api/all/instructors", getAllInstructors);
 
 //Route to chat user with AI
 router.post("/api/ai/chat", chatWithAI);
+
+//Route to handle change password 
+router.put("/api/change/password/:email", changePassword);
 
 export default router;
