@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import User from '../models/User';
 import { CustomizedRequest } from '../controllers/userControllers';
 import jwtAuthMiddleware from '../middlewares/jwtAuth';
+import Course from '../models/Course';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
     apiVersion: '2024-06-20',
@@ -25,6 +26,12 @@ router.post('/api/create-payment-intent', jwtAuthMiddleware, async (req: Customi
 
         user?.courses.push(courseId)
         await user?.save();
+
+        //store Enrolled student in course 
+        const course = await Course.findById(courseId);
+
+        course?.enrollments.push(user?.id);
+        await course?.save();
 
         res.status(200).json({ clientSecret: paymentIntent.client_secret });
     } catch (error) {
