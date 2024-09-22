@@ -33,12 +33,14 @@ export const sendOtp = async (req: Request, res: Response) => {
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ msg: "User not found" });
 
-        // Create a transport for sending emails
+        // Create transport for sending emails using correct SMTP settings
         const transport = nodeMailer.createTransport({
-            service: "gmail",
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false, // use SSL/TLS if you set port to 465
             auth: {
                 user: process.env.MY_EMAIL,
-                pass: process.env.MY_PASS,
+                pass: process.env.MY_PASS, // Use the App Password generated from Google
             },
         });
 
