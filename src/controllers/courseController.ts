@@ -166,7 +166,11 @@ export const getCourses = async (req: Request, res: Response) => {
         }).populate({
             path: 'quizzes', // Assuming 'quizzes' is an array of quiz IDs
             select: 'title questions',
-        });
+        }).populate({
+            path: 'enrollments', // Populates enrollments with user details
+            select: 'name email', // Adjust the select fields based on the data you need
+            model: 'User', // Specifies that enrollments refer to the User model
+          });
 
         if (!courses || courses.length === 0) {
             return res.status(404).json({ msg: "No courses found" });
