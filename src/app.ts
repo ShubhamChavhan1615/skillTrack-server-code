@@ -7,6 +7,7 @@ import courseRoutes from "./routes/courseRoutes";
 import quizRoutes from "./routes/quizRoutes";
 import paymentRoute from "./routes/create-payment-intent";
 import googleMeetRoutes from "./routes/eventRoutes";
+import adminRoutes from "./routes/adminRoutes";
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const app = express();
@@ -30,6 +31,7 @@ app.use("/instructor", courseRoutes);
 app.use("/quize", quizRoutes);
 app.use("/payment", paymentRoute);
 app.use("/google", googleMeetRoutes);
+app.use("/admin", adminRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
