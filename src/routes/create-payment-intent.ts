@@ -40,6 +40,24 @@ router.post('/api/create-payment-intent', jwtAuthMiddleware, async (req: Customi
     }
 });
 
+router.post('/api/instructor/create-payment-intent', async (req: CustomizedRequest, res: Response) => {
+    const { amount, description } = req.body;
+
+    try {
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(amount), // Amount in smallest currency unit (e.g., paise)
+            currency: 'inr',
+            payment_method_types: ['card'],
+            metadata: { description }, // Attach metadata to track which course the payment is for
+        });
+
+        res.status(200).json({ clientSecret: paymentIntent.client_secret });
+    } catch (error) {
+        console.error('Error creating payment intent:', error);
+        res.status(500).json({ error: 'Unable to create payment intent' });
+    }
+});
+
 export default router;
 
 //this is the payment integration code 
