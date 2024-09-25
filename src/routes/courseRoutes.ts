@@ -1,6 +1,6 @@
 import express from "express";
 import { testRoute } from "../controllers/userControllers";
-import { createCourse, deleteCourse, editCourse, getCoursesForInstructor } from "../controllers/courseController";
+import { createCourse, deleteCourse, editCourse, getCoursesForInstructor, getInstructorCourses } from "../controllers/courseController";
 import jwtAuthMiddleware from "../middlewares/jwtAuth";
 import multer from "multer";
 
@@ -27,6 +27,9 @@ router.delete("/api/delete/course/:courseId", jwtAuthMiddleware, deleteCourse);
 
 //route to get course
 router.get("/api/get/course", jwtAuthMiddleware, getCoursesForInstructor);
+
+//Route to get only particuler instructor courses
+router.get("/api/get/instructor/courses", jwtAuthMiddleware, getInstructorCourses);
 
 
 export default router;

@@ -162,7 +162,7 @@ export const getCourses = async (req: Request, res: Response) => {
         // Fetch courses and populate the instructor's name and other course details
         const courses = await Course.find().populate({
             path: 'instructor',
-            select: 'name' 
+            select: 'name'
         }).populate({
             path: 'quizzes', // Assuming 'quizzes' is an array of quiz IDs
             select: 'title questions',
@@ -170,7 +170,7 @@ export const getCourses = async (req: Request, res: Response) => {
             path: 'enrollments', // Populates enrollments with user details
             select: 'name email', // Adjust the select fields based on the data you need
             model: 'User', // Specifies that enrollments refer to the User model
-          });
+        });
 
         if (!courses || courses.length === 0) {
             return res.status(404).json({ msg: "No courses found" });
@@ -215,3 +215,36 @@ export const ratingToCourse = async (req: CustomizedRequest, res: Response) => {
         res.status(500).json({ msg: "Internal server error" });
     }
 }
+
+export const getInstructorCourses = async (req: CustomizedRequest, res: Response) => {
+    try {
+        const instructorId = req.user?.id;
+
+        if (!instructorId) {
+            return res.status(400).json({ msg: "Instructor ID is required" });
+        }
+
+        const courses = await Course.find({ instructor: instructorId }).populate({
+            path: 'instructor',
+            select: 'name'
+        }).populate({
+            path: 'quizzes', // Assuming 'quizzes' is an array of quiz IDs
+            select: 'title questions',
+        }).populate({
+            path: 'enrollments', // Populates enrollments with user details
+            select: 'name email', // Adjust the select fields based on the data you need
+            model: 'User', // Specifies that enrollments refer to the User model
+        });
+
+        // Check if the instructor has any courses
+        if (!courses || courses.length === 0) {
+            return res.status(404).json({ msg: "No courses found for this instructor" });
+        }
+
+        // Send the courses back to the client
+        res.status(200).json({ courses });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: "Internal server error" });
+    }
+};
