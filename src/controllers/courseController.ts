@@ -187,26 +187,33 @@ export const getCourses = async (req: Request, res: Response) => {
 //handle rating course 
 export const ratingToCourse = async (req: CustomizedRequest, res: Response) => {
     try {
-        const userId = req.user?.id;
-        const courseId = req.params.courseId;
+        const userId = req.user?.id; // Get the authenticated user's ID
+        const courseId = req.params.courseId; // Get the course ID from the request params
+        const { rating } = req.body; // The rating should be between 1 and 5
 
         if (!userId) {
             return res.status(400).json({ msg: "User ID is missing" });
         }
 
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ msg: "Rating must be between 1 and 5" });
+        }
+
+        // Find the course by its ID
         const course = await Course.findById(courseId);
         if (!course) {
             return res.status(404).json({ msg: "No course found" });
         }
 
-        const userObjectId = new mongoose.Schema.Types.ObjectId(userId);
+        // Convert userId to ObjectId
+        const userObjectId = new mongoose.Types.ObjectId(userId);
 
-        // Prevent duplicate ratings
-        if (course.rating.includes(userObjectId)) {
+        const existingRating = course.ratings.find((r) => r.userId.equals(userObjectId));
+        if (existingRating) {
             return res.status(400).json({ msg: "User has already rated this course" });
         }
 
-        course.rating.push(userObjectId);
+        course.ratings.push({ userId: userObjectId, value: rating });
         await course.save(); // Save the updated course document
 
         res.status(200).json({ msg: "Course rating was successful" });
@@ -214,7 +221,8 @@ export const ratingToCourse = async (req: CustomizedRequest, res: Response) => {
         console.error(error);
         res.status(500).json({ msg: "Internal server error" });
     }
-}
+};
+
 
 export const getInstructorCourses = async (req: CustomizedRequest, res: Response) => {
     try {

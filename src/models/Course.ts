@@ -9,7 +9,7 @@ interface ICourse extends Document {
     quizzes: mongoose.Schema.Types.ObjectId[];
     price: number;
     enrollments: mongoose.Schema.Types.ObjectId[];
-    rating: mongoose.Schema.Types.ObjectId[];
+    ratings: { userId: any; value: number }[];
     category: string;
     tags: string[];
     createdAt: Date;
@@ -68,9 +68,9 @@ const CourseSchema: Schema = new Schema(
             type: String,
             default: [],
         }],
-        rating: [{
-            type: Schema.Types.ObjectId,
-            ref: 'User',
+        ratings: [{
+            userId: { type: Schema.Types.ObjectId, ref: 'User' },
+            value: { type: Number, min: 1, max: 5 },
             default: [],
         }]
     },
