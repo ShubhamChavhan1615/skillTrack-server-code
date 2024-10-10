@@ -43,6 +43,7 @@ router.post('/api/create-payment-intent', jwtAuthMiddleware, async (req: Customi
     const { amount, courseId } = req.body;
 
     try {
+        // Create payment intent using Stripe
         const paymentIntent = await stripe.paymentIntents.create({
             amount: Math.round(amount), // Amount in smallest currency unit (e.g., paise)
             currency: 'inr',
@@ -50,24 +51,29 @@ router.post('/api/create-payment-intent', jwtAuthMiddleware, async (req: Customi
             metadata: { courseId }, // Attach metadata to track which course the payment is for
         });
 
+        // Find the user
         const user = await User.findById(req.user?.id);
 
-        // Check if user is already enrolled in the course
+        // Find the course
         const course = await Course.findById(courseId);
 
         if (!course) {
             return res.status(404).json({ error: 'Course not found' });
         }
 
+        // Check if user is already enrolled in the course (in both user.courses and course.enrollments)
+        if (user?.courses.includes(courseId)) {
+            return res.status(400).json({ error: 'You are already enrolled in this course' });
+        }
+
         if (course.enrollments.includes(user?.id)) {
             return res.status(400).json({ error: 'You are already enrolled in this course' });
         }
 
-        // Enroll the user in the course
+        // Enroll the user in the course (update user.courses and course.enrollments)
         user?.courses.push(courseId);
         await user?.save();
 
-        // Add the user to course enrollments
         course.enrollments.push(user?.id);
         await course.save();
 
@@ -77,7 +83,6 @@ router.post('/api/create-payment-intent', jwtAuthMiddleware, async (req: Customi
         res.status(500).json({ error: 'Unable to create payment intent' });
     }
 });
-
 
 router.post('/api/instructor/create-payment-intent', async (req: CustomizedRequest, res: Response) => {
     const { amount, description } = req.body;
