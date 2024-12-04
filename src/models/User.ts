@@ -6,6 +6,10 @@ interface IUser extends Document {
   password: string;
   role: 'student' | 'instructor' | 'admin';
   courses: Schema.Types.ObjectId[];
+  instructors: [{
+    email: string;
+    payedAmount: number;
+  }];
 }
 
 const UserSchema = new Schema<IUser>({
@@ -14,6 +18,7 @@ const UserSchema = new Schema<IUser>({
   password: { type: String, required: true },
   role: { type: String, enum: ['student', 'instructor', 'admin'], default: 'student' },
   courses: [{ type: Schema.Types.ObjectId, ref: 'Course', unique: true }],
+  instructors: [{ email: String, payedAmount: Number }]
 });
 
 const User = model<IUser>('User', UserSchema);

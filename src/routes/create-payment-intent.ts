@@ -84,16 +84,51 @@ router.post('/api/create-payment-intent', jwtAuthMiddleware, async (req: Customi
     }
 });
 
-router.post('/api/instructor/create-payment-intent', async (req: CustomizedRequest, res: Response) => {
-    const { amount, description } = req.body;
+// router.post('/api/instructor/create-payment-intent/:email', async (req: CustomizedRequest, res: Response) => {
+//     const { amount, description } = req.body;
+//     const email = req.params.email
+//     try {
+//         const adminUser = await User.findOne({ role: 'admin' });
+//         if (!adminUser) {
+//             return res.status(403).json({ error: 'Unauthorized: Admin privileges required' });
+//         }
 
+//         const paymentIntent = await stripe.paymentIntents.create({
+//             amount: Math.round(amount), // Amount in smallest currency unit (e.g., paise)
+//             currency: 'inr',
+//             payment_method_types: ['card'],
+//             metadata: { description }, // Attach metadata to track which course the payment is for
+//         });
+//         adminUser.instructors.push({ email: email, payedAmount: amount })
+//         await adminUser.save()
+//         res.status(200).json({ clientSecret: paymentIntent.client_secret });
+//     } catch (error) {
+//         console.error('Error creating payment intent:', error);
+//         res.status(500).json({ error: 'Unable to create payment intent' });
+//     }
+// });
+
+router.post('/api/instructor/create-payment-intent/:email', async (req: CustomizedRequest, res: Response) => {
+    const { amount, description } = req.body;
+    const email = req.params.email;
+    
     try {
+        const adminUser = await User.findOne({ role: 'admin' });
+        if (!adminUser) {
+            return res.status(403).json({ error: 'Unauthorized: Admin privileges required' });
+        }
+
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(amount), // Amount in smallest currency unit (e.g., paise)
+            amount: Math.round(amount),
             currency: 'inr',
             payment_method_types: ['card'],
-            metadata: { description }, // Attach metadata to track which course the payment is for
+            metadata: { description },
         });
+
+        await User.updateOne(
+            { role: 'admin' },
+            { $push: { instructors: { email, payedAmount: amount } } }
+        );
 
         res.status(200).json({ clientSecret: paymentIntent.client_secret });
     } catch (error) {
