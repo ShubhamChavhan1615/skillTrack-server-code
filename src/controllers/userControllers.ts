@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { OAuth2Client } from "google-auth-library";
 import bcrypt from "bcrypt";
 import User from "../models/User";
 import { generateToken } from "../middlewares/jwtToken";
@@ -257,5 +258,51 @@ export const changePassword = async (req: Request, res: Response) => {
     } catch (error) {
         console.error("Error handling request:", error); // Log the error for debugging purposes
         res.status(500).json({ response: "Sorry, something went wrong on the server." });
+    }
+};
+
+//signup with google 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID_SIGNUP);
+
+export const googleSignUP = async (req: Request, res: Response): Promise<void> => {
+    const { token, role } = req.body;
+
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID_SIGNUP,
+        });
+        const payload = ticket.getPayload();
+
+        if (!payload) {
+            res.status(400).json({ message: "Invalid token payload" });
+            return;
+        }
+
+        const { sub, email, name, picture } = payload;
+
+        if (!sub || !email || !name) {
+            res.status(400).json({ message: "Incomplete user data from token" });
+            return;
+        }
+
+        const newUser = new User({
+            name,
+            email,
+            role: role || 'student',
+            courses: [],
+        })
+
+        await newUser.save();
+        const authToken = generateToken(newUser.id)
+
+        res.status(200).json({
+            message: "User authenticated successfully",
+            user: newUser,
+            authToken
+        });
+    } catch (error) {
+        console.error("Error verifying Google token:", error);
+        res.status(400).json({ message: "Invalid token", error });
     }
 };
