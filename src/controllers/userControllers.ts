@@ -306,3 +306,36 @@ export const googleSignUP = async (req: Request, res: Response): Promise<void> =
         res.status(400).json({ message: "Invalid token", error });
     }
 };
+
+export const googleLogin = async (req: Request, res: Response): Promise<void> => {
+    const { token } = req.body;
+
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID_SIGNUP,
+        });
+        const payload = ticket.getPayload();
+
+        if (!payload) {
+            res.status(400).json({ success: false, message: "Invalid token payload" });
+            return;
+        }
+
+        const { email } = payload;
+
+        // Look for the user in the database
+        const user = await User.findOne({ email: email });
+        if (!user) {
+            res.status(404).json({ success: false, message: "User not found. Please sign up first." });
+            return;
+        }
+
+        // Generate auth token and respond
+        const authToken = generateToken(user.id);
+        res.status(200).json({ success: true, message: "Login successful", authToken });
+    } catch (error) {
+        console.error("Error verifying Google token:", error);
+        res.status(400).json({ success: false, message: "Google login failed", error });
+    }
+};

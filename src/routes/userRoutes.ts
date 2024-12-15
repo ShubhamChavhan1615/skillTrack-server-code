@@ -44,4 +44,7 @@ router.post("/api/course/:courseId/rate", jwtAuthMiddleware, ratingToCourse);
 //test google signup login 
 router.post('/api/google/signup', googleSignUP);
 
+//route to login with google
+router.post('/api/google/login', googleSignUP);
+
 export default router;
