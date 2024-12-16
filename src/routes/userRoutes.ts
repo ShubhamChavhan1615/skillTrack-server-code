@@ -1,5 +1,5 @@
 import express from "express";
-import { changePassword, chatWithAI, editUser, getAllInstructors, getCoursesForStudent, getUser, googleSignUP, sendOtp, signUpUser, testRoute, userLogin } from "../controllers/userControllers";
+import { changePassword, chatWithAI, editUser, getAllInstructors, getCoursesForStudent, getUser, googleLogin, googleSignUP, sendOtp, signUpUser, testRoute, userLogin } from "../controllers/userControllers";
 import jwtAuthMiddleware from "../middlewares/jwtAuth";
 import { getCourses, ratingToCourse } from "../controllers/courseController";
 const router = express.Router();
@@ -45,6 +45,6 @@ router.post("/api/course/:courseId/rate", jwtAuthMiddleware, ratingToCourse);
 router.post('/api/google/signup', googleSignUP);
 
 //route to login with google
-router.post('/api/google/login', googleSignUP);
+router.post('/api/google/login', googleLogin);
 
 export default router;
